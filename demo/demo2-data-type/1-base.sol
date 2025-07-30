@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.30;
 
-// 基础数据类型
+// 基础类型
 contract Base {
     
     // 布尔类型
