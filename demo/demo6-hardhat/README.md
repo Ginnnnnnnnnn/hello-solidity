@@ -1,13 +1,13 @@
-# Sample Hardhat Project
+# npm 指令
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+// 安装
+npm install xxx --save-dev
 
-Try running some of the following tasks:
+# hardhat 指令
 
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.js
-```
+// 部署
+npx hardhat run scripts/deployFundMe.js --network sepolia
+// 验证合约
+npx hardhat verify --network sepolia 0x8b354301e048D6c48A4b63281D9F74807b8a3C39 "参数"
+// 加密 env
+npx env-enc set-pw
