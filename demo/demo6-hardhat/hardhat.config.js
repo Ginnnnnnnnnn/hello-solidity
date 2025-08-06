@@ -1,8 +1,15 @@
 require("@nomicfoundation/hardhat-toolbox")
 require("@chainlink/env-enc").config()
+const { ProxyAgent, setGlobalDispatcher } = require("undici");
 
+// 设置 hardhat 代理
+const proxyAgent = new ProxyAgent("http://127.0.0.1:10809");
+setGlobalDispatcher(proxyAgent);
+
+// 读取环境变量
 const SEPOLIA_URL = process.env.SEPOLIA_URL
 const PRIVATE_KEY = process.env.PRIVATE_KEY
+const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -14,9 +21,8 @@ module.exports = {
     }
   },
   etherscan: {
-    apiKey: "8GRGD5H8BT1A7CIU4QZ1IHCGFA5GCMSDJG"
-  },
-  sourcify: {
-    enabled: true, // 启用 Sourcify 验证
-  },
+    apiKey: {
+      sepolia: ETHERSCAN_KEY
+    }
+  }
 };
