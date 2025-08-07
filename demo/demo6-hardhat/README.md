@@ -2,6 +2,8 @@
 
 // 安装
 npm install xxx --save-dev
+// 卸载
+npm uninstall xxx
 
 # hardhat 指令
 
