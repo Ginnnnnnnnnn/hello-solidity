@@ -21,13 +21,19 @@ contract FundMe {
     // gwei   = 1 * 10 ** 9
     // finney = 1 * 10 ** 15
     // ether  = 1 * 10 ** 18
-    uint256 MIN_VALUE = 10 * 10**18;
+    uint256 MIN_VALUE = 10 * 10 ** 18;
 
     // 目标金额（USD）
-    uint256 constant TAGET = 100 * 10**18;
+    uint256 constant TAGET = 100 * 10 ** 18;
 
     // 合约拥有者
     address public owner;
+
+    // FundTokenERC20合约地址
+    address fundTokenERC20;
+
+    // 提现状态
+    bool public getFundSuccess = false;
 
     constructor(uint256 _lockTime) {
         dataFeed = AggregatorV3Interface(
@@ -56,7 +62,7 @@ contract FundMe {
         // ETH / USD precision = 10 ** 8
         // X   / USD precision = 10 ** 18
         uint256 ethPrice = uint256(getChainlinkDataFeedLatestAnswer());
-        return (ethAmount * ethPrice) / (10**8);
+        return (ethAmount * ethPrice) / (10 ** 8);
     }
 
     function getChainlinkDataFeedLatestAnswer() internal view returns (int256) {
@@ -82,11 +88,11 @@ contract FundMe {
         // bool success = payable(msg.sender).send(address(this).balance);
         // require(success,"transfer failed");
         // call : 返回 value 和 执行结果
-        (
-            bool success, /*result*/
-
-        ) = payable(msg.sender).call{value: address(this).balance}("");
+        (bool success /*result*/, ) = payable(msg.sender).call{
+            value: address(this).balance
+        }("");
         require(success, "transfer failed");
+        getFundSuccess = true;
     }
 
     function transferOwner(address newOwner) external onlyOwner {
@@ -100,12 +106,23 @@ contract FundMe {
         );
         uint256 amount = funderMap[msg.sender];
         require(amount != 0, "Target is reached");
-        (
-            bool success, /*result*/
-
-        ) = payable(msg.sender).call{value: funderMap[msg.sender]}("");
+        (bool success /*result*/, ) = payable(msg.sender).call{
+            value: funderMap[msg.sender]
+        }("");
         require(success, "transfer failed");
         funderMap[msg.sender] = 0;
+    }
+
+    function updateFunderAmout(address addr, uint256 amount) public {
+        require(
+            msg.sender == fundTokenERC20,
+            "you do not have permission to call this function"
+        );
+        funderMap[addr] = amount;
+    }
+
+    function setFundTokenERC20(address addr) public onlyOwner {
+        fundTokenERC20 = addr;
     }
 
     // 修改器

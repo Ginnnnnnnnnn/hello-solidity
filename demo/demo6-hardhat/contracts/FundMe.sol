@@ -7,7 +7,7 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 // 1.集资期间可以进行 fund 集资
 // 2.投资期结束 达到目标: 拥有者可以进行提现; 未达到目标: 拥有者可以进行退款
 contract FundMe {
-    AggregatorV3Interface internal dataFeed;
+    AggregatorV3Interface public dataFeed;
 
     // 合约锁定信息
     uint256 deploymentTimestamp;
@@ -29,10 +29,14 @@ contract FundMe {
     // 合约拥有者
     address public owner;
 
-    constructor(uint256 _lockTime) {
-        dataFeed = AggregatorV3Interface(
-            0x694AA1769357215DE4FAC081bf1f309aDC325306
-        );
+    // FundTokenERC20合约地址
+    address fundTokenERC20;
+
+    // 提现状态
+    bool public getFundSuccess = false;
+
+    constructor(uint256 _lockTime, address dataFeedAddr) {
+        dataFeed = AggregatorV3Interface(dataFeedAddr);
         deploymentTimestamp = block.timestamp;
         lockTime = _lockTime;
         owner = msg.sender;
@@ -82,10 +86,14 @@ contract FundMe {
         // bool success = payable(msg.sender).send(address(this).balance);
         // require(success,"transfer failed");
         // call : 返回 value 和 执行结果
-        (bool success /*result*/, ) = payable(msg.sender).call{
-            value: address(this).balance
-        }("");
+        uint256 balance = address(this).balance;
+        (bool success /*result*/, ) = payable(msg.sender).call{value: balance}(
+            ""
+        );
         require(success, "transfer failed");
+        getFundSuccess = true;
+        // 发送事件
+        emit GetFundEvent(balance);
     }
 
     function transferOwner(address newOwner) external onlyOwner {
@@ -98,13 +106,34 @@ contract FundMe {
             "Target is reached"
         );
         uint256 amount = funderMap[msg.sender];
-        require(amount != 0, "Target is reached");
-        (bool success /*result*/, ) = payable(msg.sender).call{
-            value: funderMap[msg.sender]
-        }("");
+        require(amount != 0, "there is no fund for you");
+        uint256 balance = funderMap[msg.sender];
+        (bool success /*result*/, ) = payable(msg.sender).call{value: balance}(
+            ""
+        );
         require(success, "transfer failed");
         funderMap[msg.sender] = 0;
+        // 发送事件
+        emit RefundEvent(msg.sender, balance);
     }
+
+    function updateFunderAmout(address addr, uint256 amount) public {
+        require(
+            msg.sender == fundTokenERC20,
+            "you do not have permission to call this function"
+        );
+        funderMap[addr] = amount;
+    }
+
+    function setFundTokenERC20(address addr) public onlyOwner {
+        fundTokenERC20 = addr;
+    }
+
+    // 事件
+
+    event GetFundEvent(uint256 amount);
+
+    event RefundEvent(address addr, uint256 amount);
 
     // 修改器
     modifier windowsClose() {
