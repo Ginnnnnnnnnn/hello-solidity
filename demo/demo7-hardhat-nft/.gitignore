@@ -1,5 +1,4 @@
 node_modules
-deployments
 .env
 
 # Hardhat files
