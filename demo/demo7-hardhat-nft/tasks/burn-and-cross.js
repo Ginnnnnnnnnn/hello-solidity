@@ -1,4 +1,5 @@
 const { task } = require("hardhat/config")
+const { networkConfig } = require("../helper-hardhat-config")
 
 task("burn-and-cross")
     .addOptionalParam("receiver")
@@ -8,12 +9,8 @@ task("burn-and-cross")
         let chainSelector
         let receiver = taskArgs.receiver
         const tokenId = taskArgs.tokenid
-        if (network.name == "hardhat") {
-            chainSelector = 0
-        } else if (network.name == "amoy") {
-            chainSelector = "16015286601757825753"
-        } else if (network.name == "sepolia") {
-            chainSelector = "16281711391670634445"
+        if (!chainSelector) {
+            chainSelector = networkConfig[network.config.chainId].companionChainSelector
         }
         if (!receiver) {
             const nftPoolLockAndReleaseDeployment = await hre.companionNetworks["destChain"].deployments.get("NFTPoolLockAndRelease")
@@ -26,10 +23,11 @@ task("burn-and-cross")
         // 获取合约
         const nftPoolBurnAndMint = await ethers.getContract("NFTPoolBurnAndMint", account1)
         const wnft = await ethers.getContract("WarppendMyToken", account1)
-        const linkToken = await ethers.getContractAt("LinkToken", "0x0Fd9e8d3aF1aaee056EB9e802c3A762a667b1904")
+        const linkAddr = networkConfig[network.config.chainId].linkToken
+        const linkToken = await ethers.getContractAt("LinkToken", linkAddr)
         console.log(`合约获取完成 nftPoolBurnAndMint = ${nftPoolBurnAndMint.target} wnft = ${wnft.target} linkToken = ${linkToken.target}`)
         // 转入token保证交易手续费
-        const transferTx = await linkToken.transfer(nftPoolBurnAndMint.target, ethers.parseEther("5"))
+        const transferTx = await linkToken.transfer(nftPoolBurnAndMint.target, ethers.parseEther("10"))
         transferTx.wait(6)
         const balance = await linkToken.balanceOf(nftPoolBurnAndMint.target)
         console.log(`已转入CCIP交易手续费 balance = ${balance}`)

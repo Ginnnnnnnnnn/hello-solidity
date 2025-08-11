@@ -13,12 +13,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         log: true,
         waitConfirmations: waitConfirmations
     })
-    if (hre.network.config.chainId == 11155111) {
-        await hre.run("verify:verify", {
-            address: myToken.address,
-            constructorArguments: ["WarppendMyToken", "WMT"],
-        });
-    }
 }
 
 module.exports.tags = ["destchain", "all", "WarppendMyToken"]

@@ -29,12 +29,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         log: true,
         waitConfirmations: waitConfirmations
     })
-    if (hre.network.config.chainId == 11155111) {
-        await hre.run("verify:verify", {
-            address: myToken.address,
-            constructorArguments: [destinationRouter, linkTokenAddr, wnftAddr],
-        });
-    }
 }
 
 module.exports.tags = ["destchain", "all", "NFTPoolBurnAndMint"]
