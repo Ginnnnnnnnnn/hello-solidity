@@ -1,7 +1,8 @@
-require("@nomicfoundation/hardhat-toolbox");
+require("@nomicfoundation/hardhat-toolbox")
 require("dotenv").config()
 require('hardhat-deploy')
-require("hardhat-deploy-ethers");
+require("hardhat-deploy-ethers")
+require("./tasks")
 
 // 读取环境变量
 const SEPOLIA_URL = process.env.SEPOLIA_URL

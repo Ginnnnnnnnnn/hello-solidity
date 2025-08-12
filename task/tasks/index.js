@@ -1,0 +1,1 @@
+exports.mytokenerc20 = require("./mytokenerc20")
