@@ -3,6 +3,7 @@ require("dotenv").config()
 require('hardhat-deploy')
 require("hardhat-deploy-ethers")
 require("./tasks")
+require("@openzeppelin/hardhat-upgrades")
 
 // 读取环境变量
 const SEPOLIA_URL = process.env.SEPOLIA_URL

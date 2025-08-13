@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-contract NftAuction {
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+
+contract NftAuction is Initializable {
     struct Auction {
         // 卖家
         address seller;
@@ -29,7 +31,7 @@ contract NftAuction {
     // 管理员地址
     address public admin;
 
-    constructor() {
+    function initialize() public initializer {
         admin = msg.sender;
     }
 
