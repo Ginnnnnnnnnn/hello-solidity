@@ -8,7 +8,7 @@ let myToken2
 before(async function () {
     account1 = (await getNamedAccounts()).account1
     account2 = (await getNamedAccounts()).account2
-    // await deployments.fixture(["MyTokenERC20"])
+    await deployments.fixture(["MyTokenERC20"])
     myToken1 = await ethers.getContract("MyTokenERC20", account1)
     myToken2 = await ethers.getContract("MyTokenERC20", account2)
 })

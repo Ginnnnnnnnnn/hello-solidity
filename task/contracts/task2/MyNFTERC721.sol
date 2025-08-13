@@ -48,6 +48,12 @@ contract MyNFTERC721 is
         string memory symbol
     ) ERC721(name, symbol) Ownable(msg.sender) {}
 
+    function safeMint(address to, string memory _tokenURI) public onlyOwner {
+        uint256 tokenId = totalSupply() + 1;
+        _safeMint(to, tokenId);
+        _setTokenURI(tokenId, _tokenURI);
+    }
+
     // The following functions are overrides required by Solidity.
 
     function _update(
