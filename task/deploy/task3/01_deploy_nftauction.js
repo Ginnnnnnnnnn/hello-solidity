@@ -3,7 +3,7 @@ const fs = require("fs")
 const path = require("path")
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
-    const { deploy } = deployments
+    const { save } = deployments
     const { account1 } = await getNamedAccounts()
 
     // 获取合约工厂
@@ -25,7 +25,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
             abi: nftAuctionFactory.interface.format("json")
         })
     )
-    await deploy("NftAuctionProxy", {
+    await save("NftAuction", {
         abi: nftAuctionFactory.interface.format("json"),
         address: proxyAddress
     })

@@ -10,8 +10,8 @@ before(async function () {
     await deployments.fixture(["NftAuction"])
     nft = await ethers.getContract("NftAuction", account1)
 })
-describe("MyNFTERC721 合约测试", async function () {
-    it("测试 safeMint()方法", async function () {
+describe("NftAuction 合约测试", async function () {
+    it("测试 createAuction()方法", async function () {
         await nft.createAuction(
             100 * 1000,
             ethers.parseEther("1"),
