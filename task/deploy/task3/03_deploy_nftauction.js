@@ -4,7 +4,6 @@ const path = require("path")
 
 module.exports = async ({ getNamedAccounts, deployments }) => {
     const { save } = deployments
-    const { account1 } = await getNamedAccounts()
 
     // 获取合约工厂
     const nftAuctionFactory = await ethers.getContractFactory("NftAuction")

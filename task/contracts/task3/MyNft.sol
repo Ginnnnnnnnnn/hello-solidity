@@ -13,8 +13,7 @@ contract MyNft is ERC721, Ownable {
     ) ERC721(name, symbol) Ownable(msg.sender) {}
 
     function safeMint(address to) public onlyOwner {
-        tokenId++;
         _safeMint(to, tokenId);
+        tokenId++;
     }
-    
 }

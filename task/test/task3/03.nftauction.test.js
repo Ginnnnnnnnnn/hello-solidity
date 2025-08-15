@@ -21,34 +21,30 @@ before(async function () {
 })
 describe("NftAuction 合约测试", async function () {
     it("测试 全流程", async function () {
-        // 铸造3个NFT
-        const token = 1
+        const tokenId = 0
+        const auctionId = 0
+        // 铸造NFT
         await myNft.safeMint(account1)
-        // 给拍卖合约授权
+        // 授权NFT
         await myNft.setApprovalForAll(myNftAuction1.target, true);
-        // 创建拍卖
+        // 创建拍卖: 验证token拥有者
         await myNftAuction1.createAuction(
             60,
-            ethers.parseEther("0.01"),
+            ethers.parseEther("1"),
             myNft.target,
-            token
+            tokenId
         );
+        expect(await myNft.ownerOf(tokenId)).to.equal(myNftAuction1.target)
         // 参与拍卖
-        await myNftAuction2.placeBid(0, {
-            value: ethers.parseEther("0.02")
+        await myNftAuction2.placeBid(auctionId, {
+            value: ethers.parseEther("2")
         });
         // 等待结束
         await helpers.time.increase(61)
         await helpers.mine()
-        // 结束拍卖
-        await myNftAuction1.endAuction(0)
-        // 验证拍卖结果
-        const auctionResult = await myNftAuction1.auctions(0)
-        expect(auctionResult[4]).to.equal(true)
-        const owner = await myNft.ownerOf(token)
-        expect(owner).to.equal(account2)
-        const balance = await ethers.provider.getBalance(myNftAuction1.target);
-        expect(balance).to.equal(ethers.parseEther("0"))
+        // 结束拍卖：验证token拥有者; 合约余额
+        await myNftAuction1.endAuction(auctionId);
+        expect(await myNft.ownerOf(tokenId)).to.equal(account2)
+        expect(await ethers.provider.getBalance(myNftAuction1.target)).to.equal(ethers.parseEther("0"))
     })
-
 })
