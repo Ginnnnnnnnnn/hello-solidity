@@ -28,7 +28,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         abi: nftAuctionFactory.interface.format("json"),
         address: proxyAddress
     })
-    console.log(`proxyAddress = ${proxyAddress}`)
 }
 
 module.exports.tags = ["NftAuction"]

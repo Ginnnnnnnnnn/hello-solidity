@@ -8,11 +8,9 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MyNft} from "./MyNft.sol";
 
-// 拍卖合约V2
-// 1.继承NftAuction
-// 2.增加ERC20支持
-// 3.增加USD作为价格尺度
-contract NftAuctionV2Tmp is Initializable, UUPSUpgradeable {
+// 拍卖合约V3
+// 1.跨链参与拍卖
+contract NftAuctionV3 is Initializable, UUPSUpgradeable {
     // 状态变量
     mapping(uint256 => Auction) public auctions;
     // 下一个拍卖单ID
@@ -45,7 +43,7 @@ contract NftAuctionV2Tmp is Initializable, UUPSUpgradeable {
         address tokenAddress;
     }
 
-    function initialize() public initializer {
+    function initialize() public reinitializer(2) {
         admin = msg.sender;
     }
 
@@ -138,6 +136,7 @@ contract NftAuctionV2Tmp is Initializable, UUPSUpgradeable {
         // 更新最高者信息
         auction.highestBidder = msg.sender;
         auction.highestBid = amount;
+        auction.tokenAddress = _tokenAddress;
     }
 
     // 结束拍卖
@@ -186,9 +185,9 @@ contract NftAuctionV2Tmp is Initializable, UUPSUpgradeable {
     }
 
     function onERC721Received(
-        address, /* operator */
-        address, /* from */
-        uint256, /* tokenId */
+        address /* operator */,
+        address /* from */,
+        uint256 /* tokenId */,
         bytes calldata /* data */
     ) external pure returns (bytes4) {
         // 必须返回这个值
@@ -201,11 +200,9 @@ contract NftAuctionV2Tmp is Initializable, UUPSUpgradeable {
 
     // ETH -> USD => 4617 19290000 => 4617.19290000
     // USDC -> USD => 99983542 => 0.99983542
-    function getChainlinkDataFeedLatestAnswer(address tokenAddress)
-        public
-        view
-        returns (int256)
-    {
+    function getChainlinkDataFeedLatestAnswer(
+        address tokenAddress
+    ) public view returns (int256) {
         AggregatorV3Interface priceFeed = priceFeeds[tokenAddress];
         // prettier-ignore
         (

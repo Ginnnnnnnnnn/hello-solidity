@@ -23,7 +23,7 @@ describe("NftAuctionV2 合约测试", async function () {
             100,
             ethers.parseEther("1"),
             myNft.target,
-            1
+            0
         )
         const auction1 = await nftAuction.auctions(0)
         const implAddress1 = await upgrades.erc1967.getImplementationAddress(nftAuction.target)
