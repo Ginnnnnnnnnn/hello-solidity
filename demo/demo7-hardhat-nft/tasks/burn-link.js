@@ -1,7 +1,7 @@
 const { task } = require("hardhat/config")
 const { networkConfig } = require("../helper-hardhat-config")
 
-task("burn-and-cross")
+task("burn-link")
     .addOptionalParam("receiver")
     .addParam("tokenid")
     .setAction(async (taskArgs, hre) => {
@@ -26,12 +26,11 @@ task("burn-and-cross")
         const linkAddr = networkConfig[network.config.chainId].linkToken
         const linkToken = await ethers.getContractAt("LinkToken", linkAddr)
         console.log(`合约获取完成 nftPoolBurnAndMint = ${nftPoolBurnAndMint.target} wnft = ${wnft.target} linkToken = ${linkToken.target}`)
-        // 授权token 0操作权限
-        // await wnft.approve(nftPoolBurnAndMint.target, 0)
-        // console.log(`NFT已授权 token = ${0}`)
-        // lock and send
-        const burnAndSendNFTTx = await nftPoolBurnAndMint.burnAndSendNFT(tokenId, account1, chainSelector, receiver)
-        console.log(`交易已完成 hash = ${burnAndSendNFTTx.hash}`)
+        // 转入token保证交易手续费
+        const transferTx = await linkToken.transfer(nftPoolBurnAndMint.target, ethers.parseEther("2"))
+        await transferTx.wait(6)
+        const balance = await linkToken.balanceOf(nftPoolBurnAndMint.target)
+        console.log(`已转入CCIP交易手续费 balance = ${balance}`)
     })
 
 module.exports = {}

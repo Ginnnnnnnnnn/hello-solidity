@@ -1,7 +1,7 @@
 const { task } = require("hardhat/config")
 const { networkConfig } = require("../helper-hardhat-config")
 
-task("lock-and-cross")
+task("lock-link")
     .addParam("tokenid")
     .addOptionalParam("chainselector")
     .addOptionalParam("receiver")
@@ -27,12 +27,11 @@ task("lock-and-cross")
         const linkAddr = networkConfig[network.config.chainId].linkToken
         const linkToken = await ethers.getContractAt("LinkToken", linkAddr)
         console.log(`合约获取完成 nftPoolLockAndRelease = ${nftPoolLockAndRelease.target} nft = ${nft.target} linkToken = ${linkToken.target}`)
-        // 授权token 0操作权限
-        // await nft.approve(nftPoolLockAndRelease.target, 0)
-        // console.log(`NFT已授权 token = ${0}`)
-        // lock and send
-        const lockAndSendNFTTx = await nftPoolLockAndRelease.lockAndSendNFT(tokenId, account1, chainSelector, receiver)
-        console.log(`交易已完成 hash = ${lockAndSendNFTTx.hash}`)
+        // 转入token保证交易手续费
+        const transferTx = await linkToken.transfer(nftPoolLockAndRelease.target, ethers.parseEther("2"))
+        await transferTx.wait(6)
+        const balance = await linkToken.balanceOf(nftPoolLockAndRelease.target)
+        console.log(`已转入CCIP交易手续费 balance = ${balance}`)
     })
 
 module.exports = {}
