@@ -1,0 +1,132 @@
+{
+  "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "candidate",
+          "type": "address"
+        }
+      ],
+      "name": "getVotes",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "candidate",
+          "type": "address"
+        }
+      ],
+      "name": "resetVotes",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "candidate",
+          "type": "address"
+        }
+      ],
+      "name": "vote",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "votingMap",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x0ebb31a452126ca61142d5fb23dbda330d3d3ce4a35e772bde8dc3fd77e53f49",
+  "receipt": {
+    "to": null,
+    "from": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "contractAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "transactionIndex": 0,
+    "gasUsed": "233790",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x1277e13c174d0432add6b274f16ed3842c42e42f9d193b41e764f118209f9a99",
+    "transactionHash": "0x0ebb31a452126ca61142d5fb23dbda330d3d3ce4a35e772bde8dc3fd77e53f49",
+    "logs": [],
+    "blockNumber": 1,
+    "cumulativeGasUsed": "233790",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "880f970cb0f97c450265bc6d85b7edff",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.30+commit.73712a01\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"candidate\",\"type\":\"address\"}],\"name\":\"getVotes\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"candidate\",\"type\":\"address\"}],\"name\":\"resetVotes\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"candidate\",\"type\":\"address\"}],\"name\":\"vote\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"votingMap\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/task1/Voting.sol\":\"Voting\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/task1/Voting.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\r\\npragma solidity ^0.8.27;\\r\\n\\r\\n// \\u521b\\u5efa\\u4e00\\u4e2a\\u540d\\u4e3aVoting\\u7684\\u5408\\u7ea6\\uff0c\\u5305\\u542b\\u4ee5\\u4e0b\\u529f\\u80fd\\uff1a\\r\\n// \\u4e00\\u4e2amapping\\u6765\\u5b58\\u50a8\\u5019\\u9009\\u4eba\\u7684\\u5f97\\u7968\\u6570\\r\\n// \\u4e00\\u4e2avote\\u51fd\\u6570\\uff0c\\u5141\\u8bb8\\u7528\\u6237\\u6295\\u7968\\u7ed9\\u67d0\\u4e2a\\u5019\\u9009\\u4eba\\r\\n// \\u4e00\\u4e2agetVotes\\u51fd\\u6570\\uff0c\\u8fd4\\u56de\\u67d0\\u4e2a\\u5019\\u9009\\u4eba\\u7684\\u5f97\\u7968\\u6570\\r\\n// \\u4e00\\u4e2aresetVotes\\u51fd\\u6570\\uff0c\\u91cd\\u7f6e\\u6240\\u6709\\u5019\\u9009\\u4eba\\u7684\\u5f97\\u7968\\u6570\\r\\ncontract Voting {\\r\\n    mapping(address => uint256) public votingMap;\\r\\n\\r\\n    function vote(address candidate) public {\\r\\n        votingMap[candidate] += 1;\\r\\n    }\\r\\n\\r\\n    function getVotes(address candidate) public view returns (uint256) {\\r\\n        return votingMap[candidate];\\r\\n    }\\r\\n\\r\\n    function resetVotes(address candidate) public {\\r\\n        votingMap[candidate] = 0;\\r\\n    }\\r\\n}\\r\\n\",\"keccak256\":\"0x3afa60d4e75d2b61f2648da253fadbe165f97df1978c4c8bf47a72fc56554e6b\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b506103468061001f6000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c8063099ae20814610051578063122d0b9c146100815780636dd7d8ea1461009d5780639ab24eb0146100b9575b600080fd5b61006b6004803603810190610066919061024c565b6100e9565b6040516100789190610292565b60405180910390f35b61009b6004803603810190610096919061024c565b610101565b005b6100b760048036038101906100b2919061024c565b610148565b005b6100d360048036038101906100ce919061024c565b6101a1565b6040516100e09190610292565b60405180910390f35b60006020528060005260406000206000915090505481565b60008060008373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000208190555050565b60016000808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020600082825461019791906102dc565b9250508190555050565b60008060008373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020549050919050565b600080fd5b600073ffffffffffffffffffffffffffffffffffffffff82169050919050565b6000610219826101ee565b9050919050565b6102298161020e565b811461023457600080fd5b50565b60008135905061024681610220565b92915050565b600060208284031215610262576102616101e9565b5b600061027084828501610237565b91505092915050565b6000819050919050565b61028c81610279565b82525050565b60006020820190506102a76000830184610283565b92915050565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052601160045260246000fd5b60006102e782610279565b91506102f283610279565b925082820190508082111561030a576103096102ad565b5b9291505056fea26469706673582212209644c01140281cda6726e343f44b0124fc27747f10d9feee0cf9ee14098161af64736f6c634300081e0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061004c5760003560e01c8063099ae20814610051578063122d0b9c146100815780636dd7d8ea1461009d5780639ab24eb0146100b9575b600080fd5b61006b6004803603810190610066919061024c565b6100e9565b6040516100789190610292565b60405180910390f35b61009b6004803603810190610096919061024c565b610101565b005b6100b760048036038101906100b2919061024c565b610148565b005b6100d360048036038101906100ce919061024c565b6101a1565b6040516100e09190610292565b60405180910390f35b60006020528060005260406000206000915090505481565b60008060008373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000208190555050565b60016000808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020600082825461019791906102dc565b9250508190555050565b60008060008373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020549050919050565b600080fd5b600073ffffffffffffffffffffffffffffffffffffffff82169050919050565b6000610219826101ee565b9050919050565b6102298161020e565b811461023457600080fd5b50565b60008135905061024681610220565b92915050565b600060208284031215610262576102616101e9565b5b600061027084828501610237565b91505092915050565b6000819050919050565b61028c81610279565b82525050565b60006020820190506102a76000830184610283565b92915050565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052601160045260246000fd5b60006102e782610279565b91506102f283610279565b925082820190508082111561030a576103096102ad565b5b9291505056fea26469706673582212209644c01140281cda6726e343f44b0124fc27747f10d9feee0cf9ee14098161af64736f6c634300081e0033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 9774,
+        "contract": "contracts/task1/Voting.sol:Voting",
+        "label": "votingMap",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_mapping(t_address,t_uint256)"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_mapping(t_address,t_uint256)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => uint256)",
+        "numberOfBytes": "32",
+        "value": "t_uint256"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      }
+    }
+  }
+}
