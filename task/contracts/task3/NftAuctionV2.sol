@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {NftAuction} from "./NftAuction.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "./NftAuction.sol";
 
-// 拍卖合约V2
-// 1.继承NftAuction
-// 2.增加ERC20支持
-// 3.增加USD作为价格尺度
-contract NftAuctionV2 is NftAuction {
-    function testHello() public pure returns (string memory) {
-        return "hello v2";
+contract NftAuctionV2 is NftAuction, Initializable, UUPSUpgradeable {
+    function initialize() public initializer {
+        admin = msg.sender;
+    }
+
+    function _authorizeUpgrade(address) internal view override {
+        // 只有管理员可以升级合约
+        require(msg.sender == admin, "Only admin can upgrade");
     }
 }

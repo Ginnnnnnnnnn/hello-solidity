@@ -9,6 +9,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     const storePath = path.resolve(__dirname, "./.cache/proxyNftAuction.json");
     const storeData = fs.readFileSync(storePath, "utf-8");
     const { proxyAddress, implAddress, abi } = JSON.parse(storeData);
+    console.log(`proxyAddress = ${proxyAddress}`)
     // 获取需要升级合约工厂
     const nftAuctionV2Factory = await ethers.getContractFactory("NftAuctionV2")
     // 升级代理合约
