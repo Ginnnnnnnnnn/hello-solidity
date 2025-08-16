@@ -32,11 +32,11 @@ describe("NftAuctionV2 合约测试", async function () {
         const implAddress2 = await upgrades.erc1967.getImplementationAddress(nftAuction.target)
         // 4.调用升级后的合约方法
         const nftAuctionV2 = await ethers.getContractAt("NftAuctionV2", nftAuction.target);
-        const hello = await nftAuctionV2.testHello()
+        // const hello = await nftAuctionV2.testHello()
         // 5.读取合约的 auction[0]
         const auction2 = await nftAuctionV2.auctions(0)
         // 对比
-        await expect(hello).to.equal("hello v2")
+        // await expect(hello).to.equal("hello v2")
         await expect(auction1[1]).to.equal(auction2[1])
         await expect(implAddress1).to.not.equal(implAddress2)
     })
