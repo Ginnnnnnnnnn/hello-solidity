@@ -1,0 +1,15 @@
+{
+  "name": "task-meme",
+  "version": "1.0.0",
+  "description": "Meme 代币的核心机制，包括代币税、流动性池和交易限制等概念，并通过实践操作，独立实现 SHIB 风格代币合约，提升智能合约开发的实践能力和解决实际问题的能力。\r ## 环境准备\r - node.js\r ## 安装与编译\r - npm install 初始化环境",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "dotenv": "^17.2.1",
+    "hardhat": "^3.0.1"
+  }
+}
