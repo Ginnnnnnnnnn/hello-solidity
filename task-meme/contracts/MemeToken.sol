@@ -14,6 +14,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract MemeToken is ERC20, Ownable {
     //============ 状态变量 ============
 
+    uint256 public memeBalance;
+    uint256 public ethBalance;
+
     // Token 最大数量
     uint256 public constant TOKEN_MAX_NUMBER = 1_0000_0000;
     // Token 价格,1 ETH
@@ -39,21 +42,19 @@ contract MemeToken is ERC20, Ownable {
         return super.transfer(to, value);
     }
 
-    // 购买Token ETH -> Token
-    // @param tokenCount 购买 token 数量
-    function getEthToToken(uint256 tokenNumber) public payable {
+    // 添加流动性
+    function addLiquidity(uint256 tokenNumber) public payable {
         // 计算需要支付多少ETH
         uint256 ethAmount = tokenNumber * tokenBasePrice;
         require(msg.value >= ethAmount, "please pay more eth");
         require(msg.value <= ethAmount, "eth pay excessive");
         // 更新 token 价位
-        
+
         // 转账 Token
         _transfer(address(this), msg.sender, tokenNumber);
     }
 
-    // 兑换ETH Token -> ETH
-    // @param ethCount 兑换 ETH 数量
+    // 移除流动性
     function removeLiquidity(uint256 ethNumber) public {
         //
     }
