@@ -15,10 +15,24 @@ import "./libraries/FixedPoint128.sol";
 import "./interfaces/IPool.sol";
 import "./interfaces/IFactory.sol";
 
+// 交易池合约
 contract Pool is IPool {
     using SafeCast for uint256;
     using LowGasSafeMath for int256;
     using LowGasSafeMath for uint256;
+
+    struct Position {
+        // 该 Position 拥有的流动性
+        uint128 liquidity;
+        // 可提取的 token0 数量
+        uint128 tokensOwed0;
+        // 可提取的 token1 数量
+        uint128 tokensOwed1;
+        // 上次提取手续费时的 feeGrowthGlobal0X128
+        uint256 feeGrowthInside0LastX128;
+        // 上次提取手续费是的 feeGrowthGlobal1X128
+        uint256 feeGrowthInside1LastX128;
+    }
 
     /// @inheritdoc IPool
     address public immutable override factory;
@@ -45,21 +59,18 @@ contract Pool is IPool {
     /// @inheritdoc IPool
     uint256 public override feeGrowthGlobal1X128;
 
-    struct Position {
-        // 该 Position 拥有的流动性
-        uint128 liquidity;
-        // 可提取的 token0 数量
-        uint128 tokensOwed0;
-        // 可提取的 token1 数量
-        uint128 tokensOwed1;
-        // 上次提取手续费时的 feeGrowthGlobal0X128
-        uint256 feeGrowthInside0LastX128;
-        // 上次提取手续费是的 feeGrowthGlobal1X128
-        uint256 feeGrowthInside1LastX128;
-    }
-
     // 用一个 mapping 来存放所有 Position 的信息
     mapping(address => Position) public positions;
+
+    constructor() {
+        // constructor 中初始化 immutable 的常量
+        // Factory 创建 Pool 时会通 new Pool{salt: salt}() 的方式创建 Pool 合约，通过 salt 指定 Pool 的地址，这样其他地方也可以推算出 Pool 的地址
+        // 参数通过读取 Factory 合约的 parameters 获取
+        // 不通过构造函数传入，因为 CREATE2 会根据 initcode 计算出新地址（new_address = hash(0xFF, sender, salt, bytecode)），带上参数就不能计算出稳定的地址了
+        (factory, token0, token1, tickLower, tickUpper, fee) = IFactory(
+            msg.sender
+        ).parameters();
+    }
 
     function getPosition(
         address owner
@@ -82,16 +93,6 @@ contract Pool is IPool {
             positions[owner].tokensOwed0,
             positions[owner].tokensOwed1
         );
-    }
-
-    constructor() {
-        // constructor 中初始化 immutable 的常量
-        // Factory 创建 Pool 时会通 new Pool{salt: salt}() 的方式创建 Pool 合约，通过 salt 指定 Pool 的地址，这样其他地方也可以推算出 Pool 的地址
-        // 参数通过读取 Factory 合约的 parameters 获取
-        // 不通过构造函数传入，因为 CREATE2 会根据 initcode 计算出新地址（new_address = hash(0xFF, sender, salt, bytecode)），带上参数就不能计算出稳定的地址了
-        (factory, token0, token1, tickLower, tickUpper, fee) = IFactory(
-            msg.sender
-        ).parameters();
     }
 
     function initialize(uint160 sqrtPriceX96_) external override {

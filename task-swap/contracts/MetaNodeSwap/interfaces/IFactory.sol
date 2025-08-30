@@ -1,13 +1,21 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.24;
 
+// 工厂合约接口
 interface IFactory {
+    // 创建池参数
     struct Parameters {
+        // 工厂地址
         address factory;
+        // 代币A
         address tokenA;
+        // 代币B
         address tokenB;
+        // 用于干扰创建合约地址计算
         int24 tickLower;
+        // 用于干扰创建合约地址计算
         int24 tickUpper;
+        // 费用
         uint24 fee;
     }
 

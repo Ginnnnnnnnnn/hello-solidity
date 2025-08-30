@@ -17,6 +17,7 @@ interface ISwapCallback {
     ) external;
 }
 
+// 交易池合约接口
 interface IPool {
     function factory() external view returns (address);
 
