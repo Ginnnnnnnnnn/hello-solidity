@@ -4,15 +4,9 @@ pragma abicoder v2;
 
 import "./IPool.sol";
 
+// 交易路由合约接口
 interface ISwapRouter is ISwapCallback {
-    event Swap(
-        address indexed sender,
-        bool zeroForOne,
-        uint256 amountIn,
-        uint256 amountInRemaining,
-        uint256 amountOut
-    );
-
+    // 交易参数
     struct ExactInputParams {
         address tokenIn;
         address tokenOut;
@@ -24,10 +18,7 @@ interface ISwapRouter is ISwapCallback {
         uint160 sqrtPriceLimitX96;
     }
 
-    function exactInput(
-        ExactInputParams calldata params
-    ) external payable returns (uint256 amountOut);
-
+    // 交易参数
     struct ExactOutputParams {
         address tokenIn;
         address tokenOut;
@@ -39,10 +30,7 @@ interface ISwapRouter is ISwapCallback {
         uint160 sqrtPriceLimitX96;
     }
 
-    function exactOutput(
-        ExactOutputParams calldata params
-    ) external payable returns (uint256 amountIn);
-
+    // 报价参数
     struct QuoteExactInputParams {
         address tokenIn;
         address tokenOut;
@@ -51,10 +39,7 @@ interface ISwapRouter is ISwapCallback {
         uint160 sqrtPriceLimitX96;
     }
 
-    function quoteExactInput(
-        QuoteExactInputParams calldata params
-    ) external returns (uint256 amountOut);
-
+    // 报价参数
     struct QuoteExactOutputParams {
         address tokenIn;
         address tokenOut;
@@ -62,6 +47,26 @@ interface ISwapRouter is ISwapCallback {
         uint256 amountOut;
         uint160 sqrtPriceLimitX96;
     }
+
+    event Swap(
+        address indexed sender,
+        bool zeroForOne,
+        uint256 amountIn,
+        uint256 amountInRemaining,
+        uint256 amountOut
+    );
+
+    function exactInput(
+        ExactInputParams calldata params
+    ) external payable returns (uint256 amountOut);
+
+    function exactOutput(
+        ExactOutputParams calldata params
+    ) external payable returns (uint256 amountIn);
+
+    function quoteExactInput(
+        QuoteExactInputParams calldata params
+    ) external returns (uint256 amountOut);
 
     function quoteExactOutput(
         QuoteExactOutputParams calldata params

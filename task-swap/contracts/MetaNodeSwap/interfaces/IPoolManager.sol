@@ -4,7 +4,7 @@ pragma abicoder v2;
 
 import "./IFactory.sol";
 
-// 交易池合约接口
+// 交易池管理合约接口
 interface IPoolManager is IFactory {
     // 交易池信息
     struct PoolInfo {

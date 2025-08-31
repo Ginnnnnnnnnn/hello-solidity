@@ -21,6 +21,7 @@ contract Pool is IPool {
     using LowGasSafeMath for int256;
     using LowGasSafeMath for uint256;
 
+    // Position 头寸
     struct Position {
         // 该 Position 拥有的流动性
         uint128 liquidity;
@@ -34,29 +35,54 @@ contract Pool is IPool {
         uint256 feeGrowthInside1LastX128;
     }
 
-    /// @inheritdoc IPool
+    // 修改Position
+    struct ModifyPositionParams {
+        // 拥有者地址
+        address owner;
+        // 流动性
+        int128 liquidityDelta;
+    }
+
+    // 交易中需要临时存储的变量
+    struct SwapState {
+        // the amount remaining to be swapped in/out of the input/output asset
+        int256 amountSpecifiedRemaining;
+        // the amount already swapped out/in of the output/input asset
+        int256 amountCalculated;
+        // current sqrt(price)
+        uint160 sqrtPriceX96;
+        // the global fee growth of the input token
+        uint256 feeGrowthGlobalX128;
+        // 该交易中用户转入的 token0 的数量
+        uint256 amountIn;
+        // 该交易中用户转出的 token1 的数量
+        uint256 amountOut;
+        // 该交易中的手续费，如果 zeroForOne 是 ture，则是用户转入 token0，单位是 token0 的数量，反正是 token1 的数量
+        uint256 feeAmount;
+    }
+
+    // 工厂地址
     address public immutable override factory;
-    /// @inheritdoc IPool
+    // 代币0
     address public immutable override token0;
-    /// @inheritdoc IPool
+    // 代币1
     address public immutable override token1;
-    /// @inheritdoc IPool
+    // 费用
     uint24 public immutable override fee;
-    /// @inheritdoc IPool
+    // 用于干扰创建合约地址计算
     int24 public immutable override tickLower;
-    /// @inheritdoc IPool
+    // 用于干扰创建合约地址计算
     int24 public immutable override tickUpper;
 
-    /// @inheritdoc IPool
+    // 价格
     uint160 public override sqrtPriceX96;
-    /// @inheritdoc IPool
+    // tick
     int24 public override tick;
-    /// @inheritdoc IPool
+    // 流动性
     uint128 public override liquidity;
-
-    /// @inheritdoc IPool
+    // 代币0交易费用
     uint256 public override feeGrowthGlobal0X128;
-    /// @inheritdoc IPool
+    // 代币1交易费用
     uint256 public override feeGrowthGlobal1X128;
 
     // 用一个 mapping 来存放所有 Position 的信息
@@ -72,6 +98,10 @@ contract Pool is IPool {
         ).parameters();
     }
 
+    /**
+     * @notice 获取 Position
+     * @param owner Position拥有者
+     */
     function getPosition(
         address owner
     )
@@ -95,6 +125,10 @@ contract Pool is IPool {
         );
     }
 
+    /**
+     * @notice 初始化价格
+     * @param sqrtPriceX96_ 价格
+     */
     function initialize(uint160 sqrtPriceX96_) external override {
         require(sqrtPriceX96 == 0, "INITIALIZED");
         // 通过价格获取 tick，判断 tick 是否在 tickLower 和 tickUpper 之间
@@ -107,33 +141,26 @@ contract Pool is IPool {
         sqrtPriceX96 = sqrtPriceX96_;
     }
 
-    struct ModifyPositionParams {
-        // the address that owns the position
-        address owner;
-        // any change in liquidity
-        int128 liquidityDelta;
-    }
-
+    /**
+     * @notice 修改Position，返回变动所需 amount0 和 amount1
+     * @param params 参数
+     */
     function _modifyPosition(
         ModifyPositionParams memory params
     ) private returns (int256 amount0, int256 amount1) {
-        // 通过新增的流动性计算 amount0 和 amount1
-        // 参考 UniswapV3 的代码
-
+        // 通过新增的流动性计算 amount0 和 amount1 参考 UniswapV3 的代码
         amount0 = SqrtPriceMath.getAmount0Delta(
             sqrtPriceX96,
             TickMath.getSqrtPriceAtTick(tickUpper),
             params.liquidityDelta
         );
-
         amount1 = SqrtPriceMath.getAmount1Delta(
             TickMath.getSqrtPriceAtTick(tickLower),
             sqrtPriceX96,
             params.liquidityDelta
         );
-        Position storage position = positions[params.owner];
-
         // 提取手续费，计算从上一次提取到当前的手续费
+        Position storage position = positions[params.owner];
         uint128 tokensOwed0 = uint128(
             FullMath.mulDiv(
                 feeGrowthGlobal0X128 - position.feeGrowthInside0LastX128,
@@ -148,7 +175,6 @@ contract Pool is IPool {
                 FixedPoint128.Q128
             )
         );
-
         // 更新提取手续费的记录，同步到当前最新的 feeGrowthGlobal0X128，代表都提取完了
         position.feeGrowthInside0LastX128 = feeGrowthGlobal0X128;
         position.feeGrowthInside1LastX128 = feeGrowthGlobal1X128;
@@ -158,7 +184,6 @@ contract Pool is IPool {
             position.tokensOwed0 += tokensOwed0;
             position.tokensOwed1 += tokensOwed1;
         }
-
         // 修改 liquidity
         liquidity = LiquidityMath.addDelta(liquidity, params.liquidityDelta);
         position.liquidity = LiquidityMath.addDelta(
@@ -167,10 +192,11 @@ contract Pool is IPool {
         );
     }
 
-    /// @dev Get the pool's balance of token0
-    /// @dev This function is gas optimized to avoid a redundant extcodesize check in addition to the returndatasize
-    /// check
+    /**
+     * @notice 代币0余额
+     */
     function balance0() private view returns (uint256) {
+        // 查询余额，节省Gas的一种方式
         (bool success, bytes memory data) = token0.staticcall(
             abi.encodeWithSelector(IERC20.balanceOf.selector, address(this))
         );
@@ -178,10 +204,11 @@ contract Pool is IPool {
         return abi.decode(data, (uint256));
     }
 
-    /// @dev Get the pool's balance of token1
-    /// @dev This function is gas optimized to avoid a redundant extcodesize check in addition to the returndatasize
-    /// check
+    /**
+     * @notice 代币0余额
+     */
     function balance1() private view returns (uint256) {
+        // 查询余额，节省Gas的一种方式
         (bool success, bytes memory data) = token1.staticcall(
             abi.encodeWithSelector(IERC20.balanceOf.selector, address(this))
         );
@@ -189,6 +216,12 @@ contract Pool is IPool {
         return abi.decode(data, (uint256));
     }
 
+    /**
+     * @notice 铸造
+     * @param recipient 接收人
+     * @param amount 金额
+     * @param data 回调数据
+     */
     function mint(
         address recipient,
         uint128 amount,
@@ -204,22 +237,26 @@ contract Pool is IPool {
         );
         amount0 = uint256(amount0Int);
         amount1 = uint256(amount1Int);
-
         uint256 balance0Before;
         uint256 balance1Before;
         if (amount0 > 0) balance0Before = balance0();
         if (amount1 > 0) balance1Before = balance1();
-        // 回调 mintCallback
+        // 回调 mintCallback 转账token
         IMintCallback(msg.sender).mintCallback(amount0, amount1, data);
-
+        // 检查token是否已经转账成功
         if (amount0 > 0)
             require(balance0Before.add(amount0) <= balance0(), "M0");
         if (amount1 > 0)
             require(balance1Before.add(amount1) <= balance1(), "M1");
-
         emit Mint(msg.sender, recipient, amount, amount0, amount1);
     }
 
+    /**
+     * @notice 提取
+     * @param recipient 接收人
+     * @param amount0Requested amount0
+     * @param amount1Requested amount1
+     */
     function collect(
         address recipient,
         uint128 amount0Requested,
@@ -227,7 +264,6 @@ contract Pool is IPool {
     ) external override returns (uint128 amount0, uint128 amount1) {
         // 获取当前用户的 position
         Position storage position = positions[msg.sender];
-
         // 把钱退给用户 recipient
         amount0 = amount0Requested > position.tokensOwed0
             ? position.tokensOwed0
@@ -235,7 +271,7 @@ contract Pool is IPool {
         amount1 = amount1Requested > position.tokensOwed1
             ? position.tokensOwed1
             : amount1Requested;
-
+        // 转账代币，先扣减，在转账，防止重放攻击
         if (amount0 > 0) {
             position.tokensOwed0 -= amount0;
             TransferHelper.safeTransfer(token0, recipient, amount0);
@@ -244,10 +280,13 @@ contract Pool is IPool {
             position.tokensOwed1 -= amount1;
             TransferHelper.safeTransfer(token1, recipient, amount1);
         }
-
         emit Collect(msg.sender, recipient, amount0, amount1);
     }
 
+    /**
+     * @notice 销毁
+     * @param amount 金额
+     */
     function burn(
         uint128 amount
     ) external override returns (uint256 amount0, uint256 amount1) {
@@ -266,7 +305,6 @@ contract Pool is IPool {
         // 获取燃烧后的 amount0 和 amount1
         amount0 = uint256(-amount0Int);
         amount1 = uint256(-amount1Int);
-
         if (amount0 > 0 || amount1 > 0) {
             (
                 positions[msg.sender].tokensOwed0,
@@ -276,28 +314,17 @@ contract Pool is IPool {
                 positions[msg.sender].tokensOwed1 + uint128(amount1)
             );
         }
-
         emit Burn(msg.sender, amount, amount0, amount1);
     }
 
-    // 交易中需要临时存储的变量
-    struct SwapState {
-        // the amount remaining to be swapped in/out of the input/output asset
-        int256 amountSpecifiedRemaining;
-        // the amount already swapped out/in of the output/input asset
-        int256 amountCalculated;
-        // current sqrt(price)
-        uint160 sqrtPriceX96;
-        // the global fee growth of the input token
-        uint256 feeGrowthGlobalX128;
-        // 该交易中用户转入的 token0 的数量
-        uint256 amountIn;
-        // 该交易中用户转出的 token1 的数量
-        uint256 amountOut;
-        // 该交易中的手续费，如果 zeroForOne 是 ture，则是用户转入 token0，单位是 token0 的数量，反正是 token1 的数量
-        uint256 feeAmount;
-    }
-
+    /**
+     * @notice 交易
+     * @param recipient 接收人
+     * @param zeroForOne 交换方向；true：0 -> 1；false：1 -> 0
+     * @param amountSpecified 出价金额；大于0：代表代币0出价金额；小于0：代表代币1出价金额
+     * @param sqrtPriceLimitX96 最大出价金额
+     * @param data 回调参数
+     */
     function swap(
         address recipient,
         bool zeroForOne,
@@ -306,7 +333,6 @@ contract Pool is IPool {
         bytes calldata data
     ) external override returns (int256 amount0, int256 amount1) {
         require(amountSpecified != 0, "AS");
-
         // zeroForOne: 如果从 token0 交换 token1 则为 true，从 token1 交换 token0 则为 false
         // 判断当前价格是否满足交易的条件
         require(
@@ -317,10 +343,8 @@ contract Pool is IPool {
                     sqrtPriceLimitX96 < TickMath.MAX_SQRT_PRICE,
             "SPL"
         );
-
         // amountSpecified 大于 0 代表用户指定了 token0 的数量，小于 0 代表用户指定了 token1 的数量
         bool exactInput = amountSpecified > 0;
-
         SwapState memory state = SwapState({
             amountSpecifiedRemaining: amountSpecified,
             amountCalculated: 0,
@@ -392,7 +416,6 @@ contract Pool is IPool {
                 (state.amountIn + state.feeAmount).toInt256()
             );
         }
-
         (amount0, amount1) = zeroForOne == exactInput
             ? (
                 amountSpecified - state.amountSpecifiedRemaining,
@@ -402,7 +425,6 @@ contract Pool is IPool {
                 state.amountCalculated,
                 amountSpecified - state.amountSpecifiedRemaining
             );
-
         if (zeroForOne) {
             // callback 中需要给 Pool 转入 token
             uint256 balance0Before = balance0();
@@ -430,7 +452,6 @@ contract Pool is IPool {
                     uint256(-amount0)
                 );
         }
-
         emit Swap(
             msg.sender,
             recipient,

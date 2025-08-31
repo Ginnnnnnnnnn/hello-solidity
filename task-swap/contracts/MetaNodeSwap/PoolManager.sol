@@ -6,7 +6,7 @@ import "./interfaces/IPoolManager.sol";
 import "./Factory.sol";
 import "./interfaces/IPool.sol";
 
-// 交易池合约
+// 交易池管理合约
 contract PoolManager is Factory, IPoolManager {
     // 交易对
     Pair[] public pairs;

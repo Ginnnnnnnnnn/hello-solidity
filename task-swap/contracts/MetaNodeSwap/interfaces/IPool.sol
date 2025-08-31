@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.24;
 
+// 铸造回调合约接口
 interface IMintCallback {
     function mintCallback(
         uint256 amount0Owed,
@@ -9,6 +10,7 @@ interface IMintCallback {
     ) external;
 }
 
+// 交易回调合约接口
 interface ISwapCallback {
     function swapCallback(
         int256 amount0Delta,

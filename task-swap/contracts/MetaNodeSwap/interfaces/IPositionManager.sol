@@ -4,7 +4,9 @@ pragma abicoder v2;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
+// Position管理合约接口
 interface IPositionManager is IERC721 {
+    // 头寸信息
     struct PositionInfo {
         uint256 id;
         address owner;
@@ -22,11 +24,7 @@ interface IPositionManager is IERC721 {
         uint256 feeGrowthInside1LastX128;
     }
 
-    function getAllPositions()
-        external
-        view
-        returns (PositionInfo[] memory positionInfo);
-
+    // 铸造参数
     struct MintParams {
         address token0;
         address token1;
@@ -36,6 +34,11 @@ interface IPositionManager is IERC721 {
         address recipient;
         uint256 deadline;
     }
+
+    function getAllPositions()
+        external
+        view
+        returns (PositionInfo[] memory positionInfo);
 
     function mint(
         MintParams calldata params

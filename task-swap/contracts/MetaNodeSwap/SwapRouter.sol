@@ -8,27 +8,24 @@ import "./interfaces/ISwapRouter.sol";
 import "./interfaces/IPool.sol";
 import "./interfaces/IPoolManager.sol";
 
+// 交易路由合约
 contract SwapRouter is ISwapRouter {
+    // 交易池管理合约
     IPoolManager public poolManager;
 
     constructor(address _poolManager) {
         poolManager = IPoolManager(_poolManager);
     }
 
-    /// @dev Parses a revert reason that should contain the numeric quote
-    function parseRevertReason(
-        bytes memory reason
-    ) private pure returns (int256, int256) {
-        if (reason.length != 64) {
-            if (reason.length < 68) revert("Unexpected error");
-            assembly {
-                reason := add(reason, 0x04)
-            }
-            revert(abi.decode(reason, (string)));
-        }
-        return abi.decode(reason, (int256, int256));
-    }
-
+    /**
+     * @notice 交易
+     * @param pool 交易池
+     * @param recipient 接收人
+     * @param zeroForOne 交换方向；true：0 -> 1；false：1 -> 0
+     * @param amountSpecified 出价金额；大于0：代表代币0出价金额；小于0：代表代币1出价金额
+     * @param sqrtPriceLimitX96 最大出价金额
+     * @param data 回调参数
+     */
     function swapInPool(
         IPool pool,
         address recipient,
@@ -52,6 +49,11 @@ contract SwapRouter is ISwapRouter {
         }
     }
 
+    /**
+     * @notice 交易
+     * 根据参数中交易路径进行一个一个进行交易
+     * @param params 参数
+     */
     function exactInput(
         ExactInputParams calldata params
     ) external payable override returns (uint256 amountOut) {
@@ -113,6 +115,11 @@ contract SwapRouter is ISwapRouter {
         return amountOut;
     }
 
+    /**
+     * @notice 交易
+     * 根据参数中交易路径进行一个一个进行交易
+     * @param params 参数
+     */
     function exactOutput(
         ExactOutputParams calldata params
     ) external payable override returns (uint256 amountIn) {
@@ -167,7 +174,7 @@ contract SwapRouter is ISwapRouter {
         // 如果交换到指定数量 tokenOut 消耗的 tokenIn 数量超过指定的最大值，报错
         require(amountIn <= params.amountInMaximum, "Slippage exceeded");
 
-        // 发射 Swap 事件
+        // 发送 Swap 事件
         emit Swap(
             msg.sender,
             zeroForOne,
@@ -180,12 +187,14 @@ contract SwapRouter is ISwapRouter {
         return amountIn;
     }
 
-    // 报价，指定 tokenIn 的数量和 tokenOut 的最小值，返回 tokenOut 的实际数量
+    /**
+     * @notice 报价，指定 tokenIn 的数量和 tokenOut 的最小值，返回 tokenOut 的实际数量
+     * @param params 参数
+     */
     function quoteExactInput(
         QuoteExactInputParams calldata params
     ) external override returns (uint256 amountOut) {
         // 因为没有实际 approve，所以这里交易会报错，我们捕获错误信息，解析需要多少 token
-
         return
             this.exactInput(
                 ExactInputParams({
@@ -201,7 +210,10 @@ contract SwapRouter is ISwapRouter {
             );
     }
 
-    // 报价，指定 tokenOut 的数量和 tokenIn 的最大值，返回 tokenIn 的实际数量
+    /**
+     * @notice 报价，指定 tokenOut 的数量和 tokenIn 的最大值，返回 tokenIn 的实际数量
+     * @param params 参数
+     */
     function quoteExactOutput(
         QuoteExactOutputParams calldata params
     ) external override returns (uint256 amountIn) {
@@ -220,6 +232,12 @@ contract SwapRouter is ISwapRouter {
             );
     }
 
+    /**
+     * @notice 交易回调
+     * @param amount0Delta token0金额
+     * @param amount1Delta token1金额
+     * @param data 回调数据
+     */
     function swapCallback(
         int256 amount0Delta,
         int256 amount1Delta,
@@ -251,5 +269,22 @@ contract SwapRouter is ISwapRouter {
         if (amountToPay > 0) {
             IERC20(tokenIn).transferFrom(payer, _pool, amountToPay);
         }
+    }
+
+    /**
+     * @notice 解析应包含数字引号的还原原因
+     * @param reason 数据
+     */
+    function parseRevertReason(
+        bytes memory reason
+    ) private pure returns (int256, int256) {
+        if (reason.length != 64) {
+            if (reason.length < 68) revert("Unexpected error");
+            assembly {
+                reason := add(reason, 0x04)
+            }
+            revert(abi.decode(reason, (string)));
+        }
+        return abi.decode(reason, (int256, int256));
     }
 }

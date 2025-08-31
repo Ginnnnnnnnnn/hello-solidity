@@ -13,21 +13,35 @@ import "./interfaces/IPositionManager.sol";
 import "./interfaces/IPool.sol";
 import "./interfaces/IPoolManager.sol";
 
+// Position管理合约
 contract PositionManager is IPositionManager, ERC721 {
     // 保存 PoolManager 合约地址
     IPoolManager public poolManager;
 
-    /// @dev The ID of the next token that will be minted. Skips 0
+    // 将要铸造的下一个令牌的ID。
     uint176 private _nextId = 1;
+
+    // 用一个 mapping 来存放所有 Position 的信息
+    mapping(uint256 => PositionInfo) public positions;
+
+    modifier checkDeadline(uint256 deadline) {
+        require(_blockTimestamp() <= deadline, "Transaction too old");
+        _;
+    }
+
+    modifier isAuthorizedForToken(uint256 tokenId) {
+        address owner = ERC721.ownerOf(tokenId);
+        require(_isAuthorized(owner, msg.sender, tokenId), "Not approved");
+        _;
+    }
 
     constructor(address _poolManger) ERC721("MetaNodeSwapPosition", "MNSP") {
         poolManager = IPoolManager(_poolManger);
     }
 
-    // 用一个 mapping 来存放所有 Position 的信息
-    mapping(uint256 => PositionInfo) public positions;
-
-    // 获取全部的 Position 信息
+    /**
+     * @notice 获取全部的 Position
+     */
     function getAllPositions()
         external
         view
@@ -41,19 +55,24 @@ contract PositionManager is IPositionManager, ERC721 {
         return positionInfo;
     }
 
+    /**
+     * @notice 获取发起人地址
+     */
     function getSender() public view returns (address) {
         return msg.sender;
     }
 
+    /**
+     * @notice 获取区块时间
+     */
     function _blockTimestamp() internal view virtual returns (uint256) {
         return block.timestamp;
     }
 
-    modifier checkDeadline(uint256 deadline) {
-        require(_blockTimestamp() <= deadline, "Transaction too old");
-        _;
-    }
-
+    /**
+     * @notice 铸造
+     * @param params 参数
+     */
     function mint(
         MintParams calldata params
     )
@@ -77,14 +96,11 @@ contract PositionManager is IPositionManager, ERC721 {
             params.token1,
             params.index
         );
-        IPool pool = IPool(_pool);
-
         // 通过获取 pool 相关信息，结合 params.amount0Desired 和 params.amount1Desired 计算这次要注入的流动性
-
+        IPool pool = IPool(_pool);
         uint160 sqrtPriceX96 = pool.sqrtPriceX96();
         uint160 sqrtRatioAX96 = TickMath.getSqrtPriceAtTick(pool.tickLower());
         uint160 sqrtRatioBX96 = TickMath.getSqrtPriceAtTick(pool.tickUpper());
-
         liquidity = LiquidityAmounts.getLiquidityForAmounts(
             sqrtPriceX96,
             sqrtRatioAX96,
@@ -92,7 +108,6 @@ contract PositionManager is IPositionManager, ERC721 {
             params.amount0Desired,
             params.amount1Desired
         );
-
         // data 是 mint 后回调 PositionManager 会额外带的数据
         // 需要 PoistionManger 实现回调，在回调中给 Pool 打钱
         bytes memory data = abi.encode(
@@ -101,11 +116,10 @@ contract PositionManager is IPositionManager, ERC721 {
             params.index,
             msg.sender
         );
-
         (amount0, amount1) = pool.mint(address(this), liquidity, data);
-
+        // 生成NFT发送给接收人，铸造证明
         _mint(params.recipient, (positionId = _nextId++));
-
+        // 添加PositionInfo
         (
             ,
             uint256 feeGrowthInside0LastX128,
@@ -113,7 +127,6 @@ contract PositionManager is IPositionManager, ERC721 {
             ,
 
         ) = pool.getPosition(address(this));
-
         positions[positionId] = PositionInfo({
             id: positionId,
             owner: params.recipient,
@@ -131,12 +144,10 @@ contract PositionManager is IPositionManager, ERC721 {
         });
     }
 
-    modifier isAuthorizedForToken(uint256 tokenId) {
-        address owner = ERC721.ownerOf(tokenId);
-        require(_isAuthorized(owner, msg.sender, tokenId), "Not approved");
-        _;
-    }
-
+    /**
+     * @notice 销毁
+     * @param positionId 头寸ID
+     */
     function burn(
         uint256 positionId
     )
@@ -145,10 +156,10 @@ contract PositionManager is IPositionManager, ERC721 {
         isAuthorizedForToken(positionId)
         returns (uint256 amount0, uint256 amount1)
     {
-        PositionInfo storage position = positions[positionId];
         // 通过 isAuthorizedForToken 检查 positionId 是否有权限
         // 移除流动性，但是 token 还是保留在 pool 中，需要再调用 collect 方法才能取回 token
         // 通过 positionId 获取对应 LP 的流动性
+        PositionInfo storage position = positions[positionId];
         uint128 _liquidity = position.liquidity;
         // 调用 Pool 的方法给 LP 退流动性
         address _pool = poolManager.getPool(
@@ -158,7 +169,6 @@ contract PositionManager is IPositionManager, ERC721 {
         );
         IPool pool = IPool(_pool);
         (amount0, amount1) = pool.burn(_liquidity);
-
         // 计算这部分流动性产生的手续费
         (
             ,
@@ -167,7 +177,6 @@ contract PositionManager is IPositionManager, ERC721 {
             ,
 
         ) = pool.getPosition(address(this));
-
         position.tokensOwed0 +=
             uint128(amount0) +
             uint128(
@@ -178,7 +187,6 @@ contract PositionManager is IPositionManager, ERC721 {
                     FixedPoint128.Q128
                 )
             );
-
         position.tokensOwed1 +=
             uint128(amount1) +
             uint128(
@@ -189,13 +197,17 @@ contract PositionManager is IPositionManager, ERC721 {
                     FixedPoint128.Q128
                 )
             );
-
         // 更新 position 的信息
         position.feeGrowthInside0LastX128 = feeGrowthInside0LastX128;
         position.feeGrowthInside1LastX128 = feeGrowthInside1LastX128;
         position.liquidity = 0;
     }
 
+    /**
+     * @notice 提取
+     * @param positionId 头寸ID
+     * @param recipient 接收人
+     */
     function collect(
         uint256 positionId,
         address recipient
@@ -219,16 +231,21 @@ contract PositionManager is IPositionManager, ERC721 {
             position.tokensOwed0,
             position.tokensOwed1
         );
-
         // position 已经彻底没用了，销毁
         position.tokensOwed0 = 0;
         position.tokensOwed1 = 0;
-
+        // 销毁 positionId
         if (position.liquidity == 0) {
             _burn(positionId);
         }
     }
 
+    /**
+     * @notice 铸造回调
+     * @param amount0 token0金额
+     * @param amount1 token1金额
+     * @param data 回调数据
+     */
     function mintCallback(
         uint256 amount0,
         uint256 amount1,
@@ -239,7 +256,6 @@ contract PositionManager is IPositionManager, ERC721 {
             .decode(data, (address, address, uint32, address));
         address _pool = poolManager.getPool(token0, token1, index);
         require(_pool == msg.sender, "Invalid callback caller");
-
         // 在这里给 Pool 打钱，需要用户先 approve 足够的金额，这里才会成功
         if (amount0 > 0) {
             IERC20(token0).transferFrom(payer, msg.sender, amount0);
