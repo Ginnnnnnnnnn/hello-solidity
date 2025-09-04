@@ -3,3 +3,4 @@ demo/demo7-hardhat-nft/node_modules
 task-meme/node_modules
 task-stake/node_modules
 task-swap/node_modules
+task-foundry/lib
