@@ -72,3 +72,6 @@ forge coverage && open coverage/index.html
 forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
 # 部署合约-实际部署
 forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key> --broadcast
+
+# 验证合约
+forge verify-contract <contract-address> <contract-path> --chain-id <chain-id> --etherscan-api-key <etherscan-api-key> --compiler-version <compiler-version>
